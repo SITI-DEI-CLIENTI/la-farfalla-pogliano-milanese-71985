@@ -1,0 +1,137 @@
+/* Base comune a tutti i siti: reset, griglia, movimento, accessibilità.
+   NON si modifica sito per sito: l'aspetto si decide in style.css. */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased; scroll-padding-top: 5rem; background: var(--bg);
+  -webkit-tap-highlight-color: transparent; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+body { margin: 0; min-height: 100svh; overflow-x: clip; color: var(--fg); background: var(--bg);
+  font: 400 1rem/1.6 var(--font-testo); }
+img, svg { display: block; max-width: 100%; }
+h1, h2, h3, p, ul, ol, figure { margin: 0; }
+a { color: inherit; text-decoration: none; }
+::selection { background: var(--accent); color: var(--accent-fg); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.salta { position: absolute; left: -9999px; }
+.salta:focus { left: 1rem; top: 1rem; z-index: 100; background: var(--accent); color: var(--accent-fg); padding: .5rem 1rem; }
+
+.shell { width: 100%; max-width: 88rem; margin-inline: auto; padding-inline: 1.25rem; }
+@media (width >= 48rem) { .shell { padding-inline: 2.5rem; } }
+@media (width >= 80rem) { .shell { padding-inline: 3.5rem; } }
+.sezione { padding-block: 4.5rem; }
+@media (width >= 48rem) { .sezione { padding-block: 8rem; } }
+@media (width >= 64rem) { .sezione { padding-block: 10rem; } }
+
+.etichetta { font: 500 .75rem/1.2 var(--font-etichette); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+
+@keyframes entra { from { opacity: 0; transform: translate3d(0, 24px, 0); } to { opacity: 1; transform: none; } }
+@keyframes dissolvi { from { opacity: 0; } to { opacity: 1; } }
+.js .entra { animation: entra 1s var(--ease) both; animation-delay: var(--delay, 0ms); }
+.js .reveal { opacity: 0; transform: translate3d(0, 32px, 0);
+  transition: opacity .9s var(--ease), transform 1.1s var(--ease); transition-delay: var(--delay, 0ms); }
+.js .reveal.is-visible { opacity: 1; transform: none; }
+@media (width < 48rem) {
+  .js .entra { animation-duration: .8s; animation-delay: calc(var(--delay, 0ms) * .5); }
+  .js .reveal { transform: translate3d(0, 16px, 0); transition-duration: .6s, .7s;
+    transition-delay: min(var(--delay, 0ms), 120ms); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .js .entra { animation-name: dissolvi; animation-duration: .6s; }
+  .js .reveal { transform: none; transition: opacity .6s ease; }
+  *, *::before, *::after { animation-iteration-count: 1 !important; }
+}
+[data-in-pausa] *, [data-in-pausa] *::after { animation-play-state: paused !important; }
+
+.cta-mobile { position: fixed; inset: auto 0 0 0; z-index: 50; display: grid; grid-template-columns: 1fr 1fr;
+  gap: .5rem; padding: .5rem .75rem calc(.5rem + env(safe-area-inset-bottom)); background: var(--bg);
+  border-top: 1px solid var(--border); transform: translateY(110%); transition: transform .4s var(--ease); }
+.cta-mobile.is-on { transform: none; }
+@media (width >= 48rem) { .cta-mobile { display: none; } }
+
+/* ——— Barra di scorrimento a tema: prende i colori del sito (--accent, --bg) ——— */
+html { scrollbar-width: thin; scrollbar-color: color-mix(in oklab, var(--accent) 75%, var(--bg)) var(--bg); }
+::-webkit-scrollbar { width: 11px; height: 11px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: color-mix(in oklab, var(--accent) 70%, var(--bg)); border: 3px solid var(--bg); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* ——— Header che si stacca e segue ———
+   In cima: a tutta larghezza, trasparente sulla hero. Dopo lo scorrimento (.is-scrolled,
+   messa da script.js): si stacca dai bordi e diventa una capsula flottante con vetro
+   sfocato, che segue la pagina. Il sito ne decide colori e contenuto in style.css. */
+.testata { position: fixed; top: 0; left: 0; right: 0; z-index: 60;
+  transition: top .5s var(--ease), left .5s var(--ease), right .5s var(--ease), border-radius .5s var(--ease),
+    background-color .4s ease, box-shadow .4s ease, border-color .4s ease, backdrop-filter .4s ease;
+  border: 1px solid transparent; }
+.testata.is-scrolled { top: .6rem; left: .6rem; right: .6rem; border-radius: 16px;
+  background-color: color-mix(in oklab, var(--bg) 84%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2);
+  border-color: var(--border); box-shadow: 0 10px 34px rgb(0 0 0 / .14); }
+@media (width >= 64rem) {
+  .testata.is-scrolled { top: .9rem; left: max(1rem, calc((100% - 76rem) / 2)); right: max(1rem, calc((100% - 76rem) / 2)); }
+}
+@media (prefers-reduced-motion: reduce) { .testata { transition: none; } }
+
+/* Immagini: mai deformate, mai più larghe del loro spazio */
+img { height: auto; }
+img[data-copertina], .copertina img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Mai scorrimento laterale: anche gli elementi che escono dal contenitore restano nello schermo */
+html { overflow-x: clip; }
+
+/* Struttura dell'header (uguale per tutti; colori e caratteri li decide style.css):
+   <header class="testata"><div class="shell testata__riga">
+     <a class="testata__nome" href="#top">…</a>
+     <nav class="testata__menu"><a href="#…">…</a> …</nav>
+     <a class="testata__azione" href="tel:…">Chiama ora</a>
+   </div></header> */
+.testata__riga { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-block: 1rem; transition: padding .4s var(--ease); }
+.testata.is-scrolled .testata__riga { padding-block: .6rem; padding-inline: 1.1rem; }
+.testata__nome { color: var(--fg); font-family: var(--font-titoli); font-weight: 600; font-size: 1.05rem; white-space: nowrap; }
+.testata__menu { display: none; gap: 1.6rem; align-items: center; }
+.testata__menu a { color: var(--fg); opacity: .85; font-size: .95rem; }
+.testata__menu a:hover { opacity: 1; }
+.testata__azione { display: inline-flex; align-items: center; white-space: nowrap; }
+@media (width >= 48rem) { .testata__menu { display: flex; } }
+
+/* Le foto nelle sezioni non superano mai l'altezza dello schermo (una foto più alta della
+   finestra si vede solo a pezzi e sembra sgranata). La hero a tutto schermo resta libera. */
+.sezione figure, .sezione picture { max-height: 82svh; }
+.sezione figure > img, .sezione picture > img { max-height: 82svh; }
+
+/* Orari: la riga di oggi (messa da script.js) ha un pallino ATTACCATO al nome del giorno.
+   Sta dentro il primo elemento, così non diventa un terzo elemento della riga e non
+   sposta giorno e orario. Il sito non aggiunge altri ::before alla riga. */
+[data-giorno].is-oggi { font-weight: 600; }
+[data-giorno].is-oggi > :first-child::before {
+  content: ""; display: inline-block; width: .45em; height: .45em; margin-right: .55em;
+  border-radius: 50%; background: var(--accent); vertical-align: .12em;
+}
+
+/* Su telefono la barra "Chiama / Indicazioni" è fissa in basso: il fondo della pagina
+   (footer, ultima riga) non deve finirci sotto. */
+@media (width < 48rem) {
+  body:has(.cta-mobile) { padding-bottom: calc(4.5rem + env(safe-area-inset-bottom)); }
+}
+
+/* Leggibilità minima: nessun testo di contenuto sotto i 15px, nessuna etichetta sotto i 12px. */
+p, li, dd, td { font-size: max(0.9375rem, 1em); }
+.etichetta { font-size: max(0.75rem, 1em); }
+
+/* Nessuna foto fuori dalla hero è più alta dello schermo (la hero a tutto schermo è voluta). */
+main section:not(#top) img { max-height: 85svh; }
+
+/* ——— Nastro: striscia di parole che scorre (M6 e ogni fascia di parole) ———
+   <div class="nastro" data-anima-sempre><div class="nastro__traccia">
+     <span>Pizza napoletana</span><span>Forno a legna</span>…            ← una volta
+     <span aria-hidden="true">Pizza napoletana</span>…                  ← ripetuto identico
+   </div></div>
+   La traccia contiene due copie uguali e scorre di metà: il giro è continuo. */
+.nastro { overflow: hidden; width: 100%; -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
+.nastro__traccia { display: flex; width: max-content; gap: var(--nastro-spazio, 3rem); padding-inline-end: var(--nastro-spazio, 3rem);
+  animation: nastro var(--nastro-durata, 38s) linear infinite; }
+.nastro__traccia > * { white-space: nowrap; flex: none; }
+.nastro:hover .nastro__traccia { animation-play-state: paused; }
+@keyframes nastro { to { transform: translate3d(-50%, 0, 0); } }
+@media (prefers-reduced-motion: reduce) { .nastro__traccia { animation-duration: 120s; } }
