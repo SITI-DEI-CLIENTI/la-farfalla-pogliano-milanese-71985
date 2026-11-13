@@ -55,22 +55,29 @@ html { scrollbar-width: thin; scrollbar-color: color-mix(in oklab, var(--accent)
 ::-webkit-scrollbar-thumb { background: color-mix(in oklab, var(--accent) 70%, var(--bg)); border: 3px solid var(--bg); border-radius: 999px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
-/* ——— Header che si stacca e segue ———
-   In cima: a tutta larghezza, trasparente sulla hero. Dopo lo scorrimento (.is-scrolled,
-   messa da script.js): si stacca dai bordi e diventa una capsula flottante con vetro
-   sfocato, che segue la pagina. Il sito ne decide colori e contenuto in style.css. */
-.testata { position: fixed; top: 0; left: 0; right: 0; z-index: 60;
-  transition: top .5s var(--ease), left .5s var(--ease), right .5s var(--ease), border-radius .5s var(--ease),
-    background-color .4s ease, box-shadow .4s ease, border-color .4s ease, backdrop-filter .4s ease;
-  border: 1px solid transparent; }
-.testata.is-scrolled { top: .6rem; left: .6rem; right: .6rem; border-radius: 16px;
-  background-color: color-mix(in oklab, var(--bg) 84%, transparent);
-  -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2);
-  border-color: var(--border); box-shadow: 0 10px 34px rgb(0 0 0 / .14); }
+/* ——— Header che si stacca e segue (REGOLA FISSA: entra sempre gradualmente) ———
+   In cima: a tutta larghezza, trasparente sulla hero. Scorrendo si stacca dai bordi e
+   diventa una capsula di vetro sfocato, IN PROPORZIONE allo scorrimento: --p (0 → 1 nei
+   primi 140px, la scrive script.js) guida bordi, raggio, fondo, vetro e ombra. Non è un
+   interruttore, quindi non può scattare. Queste proprietà sono bloccate (!important): il
+   sito decide solo colori e caratteri del testo in style.css, mai fondo, posizione o
+   transizioni dell'header (un fondo diverso in cima va messo sulla hero, non qui). */
+.testata { --p: 0; --stacco: .6rem; position: fixed !important; z-index: 60;
+  top: calc(var(--p) * var(--stacco)) !important;
+  left: calc(var(--p) * var(--stacco)) !important;
+  right: calc(var(--p) * var(--stacco)) !important;
+  border-radius: calc(var(--p) * 16px) !important;
+  border: 1px solid color-mix(in oklab, var(--border) calc(var(--p) * 100%), transparent) !important;
+  background: color-mix(in oklab, var(--bg) calc(var(--p) * 84%), transparent) !important;
+  -webkit-backdrop-filter: blur(calc(var(--p) * 14px)) saturate(calc(1 + var(--p) * .2)) !important;
+  backdrop-filter: blur(calc(var(--p) * 14px)) saturate(calc(1 + var(--p) * .2)) !important;
+  box-shadow: 0 10px 34px rgb(0 0 0 / calc(var(--p) * .14)) !important;
+  transition: none !important; }
 @media (width >= 64rem) {
-  .testata.is-scrolled { top: .9rem; left: max(1rem, calc((100% - 76rem) / 2)); right: max(1rem, calc((100% - 76rem) / 2)); }
+  .testata { --stacco: max(1rem, calc((100% - 76rem) / 2)); top: calc(var(--p) * .9rem) !important; }
 }
-@media (prefers-reduced-motion: reduce) { .testata { transition: none; } }
+/* i testi dell'header cambiano colore sfumando, mai di colpo */
+.testata a, .testata button, .testata span, .testata svg { transition: color .35s ease, opacity .35s ease, background-color .35s ease, fill .35s ease; }
 
 /* Immagini: mai deformate, mai più larghe del loro spazio */
 img { height: auto; }
@@ -85,8 +92,10 @@ html { overflow-x: clip; }
      <nav class="testata__menu"><a href="#…">…</a> …</nav>
      <a class="testata__azione" href="tel:…">Chiama ora</a>
    </div></header> */
-.testata__riga { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-block: 1rem; transition: padding .4s var(--ease); }
-.testata.is-scrolled .testata__riga { padding-block: .6rem; padding-inline: 1.1rem; }
+.testata__riga { display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding-block: calc(1rem - var(--p) * .4rem); }
+.testata.is-scrolled .testata__riga { padding-inline: 1.1rem; }
+.testata__riga { transition: padding-inline .4s var(--ease); }
 .testata__nome { color: var(--fg); font-family: var(--font-titoli); font-weight: 600; font-size: 1.05rem; white-space: nowrap; }
 .testata__menu { display: none; gap: 1.6rem; align-items: center; }
 .testata__menu a { color: var(--fg); opacity: .85; font-size: .95rem; }
@@ -127,11 +136,13 @@ main section:not(#top) img { max-height: 85svh; }
      <span aria-hidden="true">Pizza napoletana</span>…                  ← ripetuto identico
    </div></div>
    La traccia contiene due copie uguali e scorre di metà: il giro è continuo. */
-.nastro { overflow: hidden; width: 100%; -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+.nastro { overflow: hidden; width: 100%; padding-block: var(--nastro-alto, 1rem); -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
   mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
-.nastro__traccia { display: flex; width: max-content; gap: var(--nastro-spazio, 3rem); padding-inline-end: var(--nastro-spazio, 3rem);
-  animation: nastro var(--nastro-durata, 38s) linear infinite; }
-.nastro__traccia > * { white-space: nowrap; flex: none; }
-.nastro:hover .nastro__traccia { animation-play-state: paused; }
+.nastro > * { display: flex; flex-wrap: nowrap; width: max-content; gap: var(--nastro-spazio, 3rem);
+  padding-inline-end: var(--nastro-spazio, 3rem); animation: nastro var(--nastro-durata, 38s) linear infinite; }
+.nastro > * > * { flex: none; }
+/* REGOLA FISSA: una striscia di parole è una riga sola, su ogni schermo */
+.nastro, .nastro * { white-space: nowrap !important; }
+.nastro:hover > * { animation-play-state: paused; }
 @keyframes nastro { to { transform: translate3d(-50%, 0, 0); } }
-@media (prefers-reduced-motion: reduce) { .nastro__traccia { animation-duration: 120s; } }
+@media (prefers-reduced-motion: reduce) { .nastro > * { animation-duration: 120s; } }

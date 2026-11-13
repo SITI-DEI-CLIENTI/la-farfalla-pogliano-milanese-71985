@@ -13,10 +13,20 @@
     daRivelare.forEach((el) => io.observe(el));
   } else daRivelare.forEach((el) => el.classList.add("is-visible"));
 
-  // Header: fondo pieno dopo lo scorrimento
-  const testata = document.querySelector(".testata");
-  const segnaScorrimento = () => testata && testata.classList.toggle("is-scrolled", scrollY > 24);
-  addEventListener("scroll", segnaScorrimento, { passive: true }); segnaScorrimento();
+  // Header: si stacca GRADUALMENTE mentre si scorre (mai uno scatto). --p va da 0 (in cima)
+  // a 1 (dopo CORSA_HEADER px) e guida bordi, raggio, vetro e ombra in base.css.
+  // .is-scrolled arriva a metà corsa e serve solo ai colori del testo, che sfumano.
+  const testata = document.querySelector(".testata"), CORSA_HEADER = 140;
+  let inAttesa = false;
+  const segnaScorrimento = () => {
+    inAttesa = false;
+    if (!testata) return;
+    const p = Math.min(1, Math.max(0, scrollY / CORSA_HEADER));
+    testata.style.setProperty("--p", p.toFixed(3));
+    testata.classList.toggle("is-scrolled", p >= 0.5);
+  };
+  addEventListener("scroll", () => { if (!inAttesa) { inAttesa = true; requestAnimationFrame(segnaScorrimento); } }, { passive: true });
+  segnaScorrimento();
 
   // Barra contatti su telefono: compare quando la hero esce di vista
   const barra = document.querySelector(".cta-mobile"), hero = document.getElementById("top");
